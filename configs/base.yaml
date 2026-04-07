@@ -1,22 +1,35 @@
 # Defaults, được override bởi model 
-seed: 42
+seed: 
+  random_seed: 42
+
 data:
+  batch_size: 32
+  num_workers: 2
   freq_threshold: 5
   train_split: 0.7
   val_split: 0.15
   test_split: 0.15
-  num_workers: 2
-  batch_size: 32
 
 training:
   epochs: 20
+  patience: 10
   lr: 1.0e-4
   optimizer: 'adam'   # adamw
+  weight_decay: 0.00001
+  scheduler: reduce_lr_on_plateau # step | cosine
+  
   clip_grad_norm: 1.0
   eval_limit: 100
   eval_strategy: 'beam' # greedy
 
-wandb:
-  project: image-captioning
+logging:
+  # wandb
+  use_wandb: true
+  wandb_entity: "phucga15062005"
+  wandb_project: "FER2013"
   log_images_captions: true
   upload_checkpoints: true
+
+# !!! WARNING !!!  
+env:
+  platform: "kaggle"         # local | kaggle
