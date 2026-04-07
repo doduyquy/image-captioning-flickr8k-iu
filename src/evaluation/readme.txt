@@ -1,0 +1,1 @@
+!python -m scripts.evaluate --config transformer --checkpoint outputs/run_name/checkpoints/best.pt

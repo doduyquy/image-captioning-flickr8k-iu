@@ -1,0 +1,22 @@
+# Defaults, được override bởi model 
+seed: 42
+data:
+  freq_threshold: 5
+  train_split: 0.7
+  val_split: 0.15
+  test_split: 0.15
+  num_workers: 2
+  batch_size: 32
+
+training:
+  epochs: 20
+  lr: 1.0e-4
+  optimizer: 'adam'   # adamw
+  clip_grad_norm: 1.0
+  eval_limit: 100
+  eval_strategy: 'beam' # greedy
+
+wandb:
+  project: image-captioning
+  log_images_captions: true
+  upload_checkpoints: true
