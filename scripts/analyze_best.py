@@ -4,7 +4,7 @@ import argparse
 from src.utils.config import load_config
 from src.data.dataloader import get_loaders_flickr8k
 from src.models import build_model
-from src.evaluation.evaluator import get_detailed_results
+from src.evaluation.evaluator import evaluate_model, get_detailed_results
 from PIL import Image
 import matplotlib.pyplot as plt
 
@@ -60,8 +60,16 @@ def main():
     checkpoint = torch.load(latest_ckpt, map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
 
-    # Analyze
-    # we use beam search for better individual results
+    # 1. Chạy đánh giá tổng quát để lấy bảng điểm (BLEU-1,2,3,4, METEOR, ROUGE-L)
+    print("\n" + "="*51)
+    print("Step 1: Calculating Overall Test Metrics...")
+    print("="*51)
+    evaluate_model(model, test_loader, vocab, device, method='beam', beam_size=5)
+
+    # 2. Phân tích chi tiết từng ảnh để tìm Top 10 / Bottom 10
+    print("\n" + "="*51)
+    print("Step 2: Analyzing Individual Success/Failure Cases...")
+    print("="*51)
     detailed_results = get_detailed_results(model, test_loader, vocab, device, method='beam', beam_size=5)
     
     # Sort by score (BLEU-4)
