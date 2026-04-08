@@ -19,8 +19,8 @@ class TransformerCaptionModel(BaseCaptionModel):
         max_len = config['model'].get('max_len', 100) # Flickr8k thường max 40-50, 100 là an toàn
         
         # 1. Trích xuất đặc trưng hạ tầng (CNN)
-        self.cnn_encoder = CNNEncoder(embed_dim=embed_dim)
-        # self.cnn_encoder_fusion = CNNEncoderFusion(embed_dim=embed_dim)
+        # self.cnn_encoder = CNNEncoder(embed_dim=embed_dim)
+        self.cnn_encoder_fusion = CNNEncoderFusion(embed_dim=embed_dim)
         # 2. Xử lý không gian bằng Transformer Encoder
         self.spatial_encoder = TransformerEncoder(
             embed_dim=embed_dim, 
@@ -42,7 +42,7 @@ class TransformerCaptionModel(BaseCaptionModel):
         captions: [B, T]
         """
         # CNN trích xuất đặc trưng: [B, 49, 512]
-        features = self.cnn_encoder(images)
+        features = self.cnn_encoder_fusion(images)
         
         # Spatial Transformer Encoder tinh chỉnh đặc trưng: [B, 49, 512]
         features = self.spatial_encoder(features)
