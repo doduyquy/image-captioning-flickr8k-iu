@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from .base import BaseCaptionModel
 from .CNN.swin_encoder import SwinEncoder
-from .CNN.cnn_encoder import CNNEncoder
 from .CNN.cnn_encoder_fusion import CNNEncoderFusion
+from .CNN.hybrid_encoder import HybridEncoder
 from .encoders.transformer_encoder import TransformerEncoder
 from .decoders.transformer_decoder import TransformerDecoder
 
@@ -22,7 +22,8 @@ class TransformerCaptionModel(BaseCaptionModel):
         # 1. Trích xuất đặc trưng hạ tầng (CNN)
         # self.cnn_encoder = CNNEncoder(embed_dim=embed_dim)
         # self.cnn_encoder_fusion = CNNEncoderFusion(embed_dim=embed_dim)
-        self.cnn_encoder_swin = SwinEncoder(embed_dim=embed_dim)    
+        # self.cnn_encoder_swin = SwinEncoder(embed_dim=embed_dim)    
+        self.encoder = HybridEncoder(embed_dim=embed_dim)
         # 2. Xử lý không gian bằng Transformer Encoder
         self.spatial_encoder = TransformerEncoder(
             embed_dim=embed_dim, 
@@ -44,7 +45,8 @@ class TransformerCaptionModel(BaseCaptionModel):
         captions: [B, T]
         """
         # CNN trích xuất đặc trưng: [B, 49, 512]
-        features = self.cnn_encoder_swin(images)
+        # Hybrid trích xuất đặc trưng: [B, 49, 512]
+        features = self.encoder(images)
         
         # Spatial Transformer Encoder tinh chỉnh đặc trưng: [B, 49, 512]
         features = self.spatial_encoder(features)
@@ -79,7 +81,8 @@ class TransformerCaptionModel(BaseCaptionModel):
         images = images.to(device)
         
         # 1. Encoding
-        features = self.spatial_encoder(self.cnn_encoder_swin(images))
+        # 1. Encoding
+        features = self.spatial_encoder(self.encoder(images))
         
         # 2. Decoding (Greedy)
         start_token = vocab.stoi["<start>"]
@@ -105,7 +108,8 @@ class TransformerCaptionModel(BaseCaptionModel):
         end_token = vocab.stoi["<end>"]
         
         # 1. Encoding
-        features = self.spatial_encoder(self.cnn_encoder_swin(images)) # [B, 49, 512]
+        # 1. Encoding
+        features = self.spatial_encoder(self.encoder(images)) # [B, 49, 512]
         
         # 2. Khởi tạo Beam
         # Một beam item: (chuỗi các token, điểm xác suất tích lũy)
