@@ -1,6 +1,6 @@
 model:
-  name:	transformer
-  encoder_backbone:	resnet50
+  name:	'transformer'
+  encoder_backbone:	'efficientnet_b0'
   embed_dim:	512
   num_heads:	8
   ff_dim:	2048
