@@ -77,7 +77,7 @@ class TransformerCaptionModel(BaseCaptionModel):
         images = images.to(device)
         
         # 1. Encoding
-        features = self.spatial_encoder(self.cnn_encoder(images))
+        features = self.spatial_encoder(self.cnn_encoder_fusion(images))
         
         # 2. Decoding (Greedy)
         start_token = vocab.stoi["<start>"]
@@ -103,7 +103,7 @@ class TransformerCaptionModel(BaseCaptionModel):
         end_token = vocab.stoi["<end>"]
         
         # 1. Encoding
-        features = self.spatial_encoder(self.cnn_encoder(images)) # [B, 49, 512]
+        features = self.spatial_encoder(self.cnn_encoder_fusion(images)) # [B, 49, 512]
         
         # 2. Khởi tạo Beam
         # Một beam item: (chuỗi các token, điểm xác suất tích lũy)
