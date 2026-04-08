@@ -43,7 +43,6 @@ def get_loaders_flickr8k(
     captions_dict = filter_valid_images(image_dir, captions_dict)
 
     # 2. Đọc file chia tập (Split files)
-    # Tùy dữ liệu của bạn lưu tên file như thế nào, ở đây tôi gọi chung là trainImages.txt
     train_set = load_split_set(os.path.join(data_dir, "Flickr_8k.trainImages.txt"))
     val_set = load_split_set(os.path.join(data_dir, "Flickr_8k.devImages.txt"))
     test_set = load_split_set(os.path.join(data_dir, "Flickr_8k.testImages.txt"))

@@ -48,7 +48,7 @@ def main():
     if not captions_file_name.endswith(".txt") and not captions_file_name.endswith(".csv"):
         captions_file_name += ".txt"
 
-    image_dir = os.path.join(data_path, 'Images') 
+    image_dir = os.path.join(data_path, 'images') 
     captions_file = os.path.join(data_path, captions_file_name)
     
     print(f"--> Image Dir: {image_dir}")
