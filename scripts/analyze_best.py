@@ -12,6 +12,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--env", type=str, default="local", choices=["local", "kaggle"])
+    parser.add_argument("--checkpoint", type=str, default=None, help="Path to specific checkpoint .pth file")
     args = parser.parse_args()
 
     config = load_config(args.config, args.env)
@@ -37,20 +38,24 @@ def main():
     
     # Find the latest checkpoint
     root_path = config['flickr8k']['root_path']
-    ckpt_dir = os.path.join(root_path, "outputs/checkpoints/transformer")
     
-    if not os.path.exists(ckpt_dir):
-        print(f"Error: Checkpoint directory not found at {ckpt_dir}")
-        return
+    if args.checkpoint:
+        latest_ckpt = args.checkpoint
+        print(f"--> [Analysis] Using provided checkpoint: {latest_ckpt}")
+    else:
+        ckpt_dir = os.path.join(root_path, "outputs/checkpoints/transformer")
+        if not os.path.exists(ckpt_dir):
+            print(f"Error: Checkpoint directory not found at {ckpt_dir}. Please use --checkpoint argument.")
+            return
 
-    ckpts = [f for f in os.listdir(ckpt_dir) if f.endswith("_best.pth")]
-    if not ckpts:
-        print(f"Error: No .pth checkpoints found in {ckpt_dir}")
-        return
-    
-    ckpts.sort()
-    latest_ckpt = os.path.join(ckpt_dir, ckpts[-1])
-    print(f"--> [Analysis] Loading checkpoint: {latest_ckpt}")
+        ckpts = [f for f in os.listdir(ckpt_dir) if f.endswith("_best.pth")]
+        if not ckpts:
+            print(f"Error: No .pth checkpoints found in {ckpt_dir}")
+            return
+        
+        ckpts.sort()
+        latest_ckpt = os.path.join(ckpt_dir, ckpts[-1])
+        print(f"--> [Analysis] Loading automatically found checkpoint: {latest_ckpt}")
 
     checkpoint = torch.load(latest_ckpt, map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
