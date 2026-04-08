@@ -54,18 +54,13 @@ def calculate_metrics(all_preds, all_refs):
     # 1. Tính BLEU
     b1, b2, b3, b4 = calculate_bleu_scores(all_preds, all_refs)
     
-    # 2. Tính METEOR, Accuracy và ROUGE-L
+    # 2. Tính METEOR và ROUGE-L
     met_score = 0
-    perfect_matches = 0
     rouge_l_score = 0
     
     for preds, refs in zip(all_preds, all_refs):
         # METEOR
         met_score += meteor_score(refs, preds)
-        
-        # Accuracy: Kiểm tra xem có khớp hoàn toàn với câu nào trong refs không
-        if any(preds == r for r in refs):
-            perfect_matches += 1
             
         # ROUGE-L (Lấy max LCS F1-score trong các câu refs)
         lcs_f1s = []
@@ -83,6 +78,5 @@ def calculate_metrics(all_preds, all_refs):
         "BLEU-3": b3,
         "BLEU-4": b4,
         "METEOR": met_score / num_samples,
-        "ROUGE-L": rouge_l_score / num_samples,
-        "Accuracy": perfect_matches / num_samples
+        "ROUGE-L": rouge_l_score / num_samples
     }
