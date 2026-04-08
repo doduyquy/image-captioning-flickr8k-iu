@@ -3,8 +3,9 @@ import torch.nn as nn
 import torchvision.models as models
 
 class CNNEncoderFusion(nn.Module):
-    def __init__(self,embed=512):
+    def __init__(self, embed_dim=512, refine=True):
         super().__init__()
+        self.refine = refine
         weights = models.EfficientNet_B0_Weights.DEFAULT
         efficientnet=models.efficientnet_b0(weights=weights)
         features=efficientnet.features
@@ -26,8 +27,8 @@ class CNNEncoderFusion(nn.Module):
         self.stage7=nn.Sequential(features[7])#mbv7
         #fusion lại giữa 2 stage
         self.fuse_conv=nn.Sequential(
-            nn.Conv2d(512,embed,kernel_size=1,bias=False),
-            nn.BatchNorm2d(embed),
+            nn.Conv2d(512,embed_dim,kernel_size=1,bias=False),
+            nn.BatchNorm2d(embed_dim),
             nn.SiLU(inplace=True)
         )
 
