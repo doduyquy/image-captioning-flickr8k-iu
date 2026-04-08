@@ -9,7 +9,7 @@ model:
   max_len: 50
 
 training:
-  epochs: 50
+  epochs: 20
   scheduler: 'step' # step | cosine
   lr_step_size: 5
   lr_gamma: 0.5
