@@ -19,8 +19,8 @@ class TransformerCaptionModel(BaseCaptionModel):
         max_len = config['model'].get('max_len', 100) # Flickr8k thường max 40-50, 100 là an toàn
         
         # 1. Trích xuất đặc trưng hạ tầng (CNN)
-        # self.cnn_encoder = CNNEncoder(embed_dim=embed_dim)
-        self.cnn_encoder_fusion = CNNEncoderFusion(embed_dim=embed_dim)
+        self.cnn_encoder = CNNEncoder(embed_dim=embed_dim)
+        # self.cnn_encoder_fusion = CNNEncoderFusion(embed_dim=embed_dim)
         # 2. Xử lý không gian bằng Transformer Encoder
         self.spatial_encoder = TransformerEncoder(
             embed_dim=embed_dim, 
@@ -42,7 +42,7 @@ class TransformerCaptionModel(BaseCaptionModel):
         captions: [B, T]
         """
         # CNN trích xuất đặc trưng: [B, 49, 512]
-        features = self.cnn_encoder_fusion(images)
+        features = self.cnn_encoder(images)
         
         # Spatial Transformer Encoder tinh chỉnh đặc trưng: [B, 49, 512]
         features = self.spatial_encoder(features)
@@ -70,7 +70,7 @@ class TransformerCaptionModel(BaseCaptionModel):
         else:
             raise ValueError(f"Không hỗ trợ phương pháp decoding: {method}")
 
-    def _greedy_decode(self, images, vocab, max_len=25, device='cpu'):
+    def _greedy_decode(self, images, vocab, max_len=25, device='cpu', **kwargs):
         """
         Giải mã tham lam (Greedy Search): Ở mỗi bước chọn từ có xác suất cao nhất.
         """
@@ -94,7 +94,7 @@ class TransformerCaptionModel(BaseCaptionModel):
                 
         return captions.squeeze(0)
 
-    def _beam_search_decode(self, images, vocab, beam_size=5, max_len=25, device='cpu'):
+    def _beam_search_decode(self, images, vocab, beam_size=5, max_len=25, device='cpu', **kwargs):
         """
         Giải mã Beam Search: Duy trì K (beam_size) giả thuyết tốt nhất ở mỗi bước.
         """
