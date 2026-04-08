@@ -3,12 +3,9 @@ import torch.nn as nn
 import torchvision.models as models
 
 class CNNEncoderFusion(nn.Module):
-    def __init__(self,embed=512, pretrained=True, refine=True):
+    def __init__(self,embed=512):
         super().__init__()
-        if pretrained:
-            weights = models.EfficientNet_B0_Weights.DEFAULT
-        else:
-            weights=None
+        weights = models.EfficientNet_B0_Weights.DEFAULT
         efficientnet=models.efficientnet_b0(weights=weights)
         features=efficientnet.features
 
@@ -28,15 +25,11 @@ class CNNEncoderFusion(nn.Module):
         self.stage6=nn.Sequential(features[6]) # mbv6
         self.stage7=nn.Sequential(features[7])#mbv7
         #fusion lại giữa 2 stage
-        self.refine=refine
-        if refine:
-            self.fuse_conv=nn.Sequential(
-                nn.Conv2d(512,embed,kernel_size=1,bias=False),
-                nn.BatchNorm2d(embed),
-                nn.SiLU(inplace=True)
-            )
-        else: 
-            assert embed==512, "embed dim must be 512 when not refining"
+        self.fuse_conv=nn.Sequential(
+            nn.Conv2d(512,embed,kernel_size=1,bias=False),
+            nn.BatchNorm2d(embed),
+            nn.SiLU(inplace=True)
+        )
 
     def forward(self, images):
         x=self.stage0_5(images) # [14x14x112]
@@ -50,3 +43,5 @@ class CNNEncoderFusion(nn.Module):
         features=fusion.flatten(2) # [B,C,N]
         features=features.permute(0,2,1) # [B,N,C] [Bx49x512]
         return features
+
+
