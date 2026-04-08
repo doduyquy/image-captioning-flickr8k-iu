@@ -16,8 +16,6 @@ def calculate_bleu_scores(all_preds, all_refs):
         bleu4 += sentence_bleu(refs, preds, weights=(0.25, 0.25, 0.25, 0.25), smoothing_function=chencherry.method1)
         
     num_samples = len(all_preds)
-    if num_samples == 0:
-        return 0, 0, 0, 0
         
     return bleu1/num_samples, bleu2/num_samples, bleu3/num_samples, bleu4/num_samples
 

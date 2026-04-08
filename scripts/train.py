@@ -110,7 +110,7 @@ def main():
     evaluate_model(model, test_loader, vocab, device, method='greedy')
     
     # 2. Hiển thị một số ví dụ trực quan
-    evaluate_and_show(model, test_loader, vocab, device, method='greedy', num_samples=3)
+    evaluate_and_show(model, test_loader, vocab, device, method='greedy', num_samples=10)
     
     # upload best ckpt to wandb
     if config['logging'].get('use_wandb', True):
