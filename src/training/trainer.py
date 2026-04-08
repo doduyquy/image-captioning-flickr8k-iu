@@ -30,7 +30,7 @@ class Trainer:
         self.model.train()
         running_loss = 0
 
-        for images, captions in self.train_loader:
+        for images, captions, _ in self.train_loader:
             images = images.to(self.device)
             captions = captions.to(self.device)
 
@@ -61,7 +61,7 @@ class Trainer:
         self.model.eval()
         total_loss = 0
 
-        for images, captions in self.val_loader:
+        for images, captions, _ in self.val_loader:
             images = images.to(self.device)
             captions = captions.to(self.device)
 

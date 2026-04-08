@@ -5,10 +5,12 @@ from torch.nn.utils.rnn import pad_sequence
 def collate_fn(batch):
     images = []
     captions = []
+    paths = []
 
-    for img, cap in batch:
+    for img, cap, path in batch:
         images.append(img)
         captions.append(cap)
+        paths.append(path)
 
     images = torch.stack(images)
     captions = pad_sequence(
@@ -17,7 +19,7 @@ def collate_fn(batch):
         padding_value=0  # <pad>
     )
 
-    return images, captions
+    return images, captions, paths
 
 if __name__ == "__main__":
     # Test batch với độ dài caption khác nhau

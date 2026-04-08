@@ -20,8 +20,9 @@ class Flickr8kDataset(Dataset):
     #-> cho pytỏch biết bộ dữ liệu này có tổng cộng bao nhiêu cặp (ảnh <-> caption). Khi train thfi pytỏch sẽ dựa vào con số này để biết khi nào thf hết 1 vòng
 
     def __getitem__(self, idx):
-        """Return: (image_tensor, caption_tensor)"""
-        image = Image.open(self.image_paths[idx]).convert("RGB")
+        """Return: (image_tensor, caption_tensor, image_path)"""
+        img_path = self.image_paths[idx]
+        image = Image.open(img_path).convert("RGB")
 
         if self.transform:
             image = self.transform(image)
@@ -34,7 +35,7 @@ class Flickr8kDataset(Dataset):
         numericalized += tokens
         numericalized.append(self.vocab.stoi["<end>"])
 
-        return image, torch.tensor(numericalized)
+        return image, torch.tensor(numericalized), img_path
 
 
 # Đọc file .txt hoặc .csv và gom tất cả các mô tả (captions) của cùng một ảnh vào một nhóm.

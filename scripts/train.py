@@ -107,7 +107,7 @@ def main():
     model.load_state_dict(checkpoint['model_state_dict'])
     
     # 1. Tính toán điểm số (BLEU-1, 2, 3, 4)
-    test_metrics = evaluate_model(model, test_loader, vocab, device, method='beam')
+    test_metrics = evaluate_model(model, test_loader, vocab, device, method='greedy')
     
     # Log metrics lên WandB nếu đang dùng
     if config['logging'].get('use_wandb', True):
@@ -115,7 +115,7 @@ def main():
         wandb.log({f"Test/{k}": v for k, v in test_metrics.items()})
 
     # 2. Hiển thị một số ví dụ trực quan
-    evaluate_and_show(model, test_loader, vocab, device, method='beam', num_samples=10)
+    evaluate_and_show(model, test_loader, vocab, device, method='greedy', num_samples=10)
     
     # upload best ckpt to wandb
     if config['logging'].get('use_wandb', True):
