@@ -2,9 +2,10 @@ import torch
 import torch.nn as nn
 
 class BaseCaptionModel(nn.Module):
-    def __init__(self, encoder, decoder):
-        self.encoder = encoder
-        self.decoder = decoder
+    def __init__(self, encoder=None, decoder=None):
+        super().__init__()
+        self.encoder_module = encoder
+        self.decoder_module = decoder
 
     def encoder(images) -> torch.Tensor: #-> features
         pass
