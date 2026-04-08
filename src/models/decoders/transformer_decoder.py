@@ -3,7 +3,7 @@ import torch.nn as nn
 from ..components.positional_encoding import TokenPositionalEmbedding
 
 class TransformerDecoder(nn.Module):
-    def __init__(self, vocab_size, embed_dim=512, num_heads=8, ff_dim=2048, max_len=25):
+    def __init__(self, vocab_size, embed_dim=512, num_heads=8, ff_dim=2048, max_len=512):
         super().__init__()
         # Đối với text, cần có cả Embedding từ điển và Vị trí
         self.embedding = TokenPositionalEmbedding(vocab_size, embed_dim, max_len)

@@ -15,7 +15,7 @@ class TransformerCaptionModel(BaseCaptionModel):
         embed_dim = config['model'].get('embed_dim', 512)
         num_heads = config['model'].get('num_heads', 8)
         ff_dim = config['model'].get('ff_dim', 2048)
-        max_seq_len = config['model'].get('max_seq_len', 25)
+        max_len = config['model'].get('max_len', 100) # Flickr8k thường max 40-50, 100 là an toàn
         
         # 1. Trích xuất đặc trưng hạ tầng (CNN)
         self.cnn_encoder = CNNEncoder(embed_dim=embed_dim)
@@ -32,7 +32,7 @@ class TransformerCaptionModel(BaseCaptionModel):
             embed_dim=embed_dim,
             num_heads=num_heads,
             ff_dim=ff_dim,
-            max_len=max_seq_len
+            max_len=max_len
         )
 
     def forward(self, images, captions):
