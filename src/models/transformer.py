@@ -82,11 +82,11 @@ class TransformerCaptionModel(BaseCaptionModel):
         start_token = vocab.stoi["<start>"]
         captions = torch.tensor([[start_token]]).to(device)
         
-        for _ in range(max_len):
+        for _ in range(max_len): # sinh từ
             logits = self.decoder(captions, features)
             next_token = logits[:, -1, :].argmax(dim=-1).unsqueeze(1)
             
-            captions = torch.cat([captions, next_token], dim=1)
+            captions = torch.cat([captions, next_token], dim=1) # nối từ trước và từ mới sinh ra 
             
             if next_token.item() == vocab.stoi["<end>"]:
                 break

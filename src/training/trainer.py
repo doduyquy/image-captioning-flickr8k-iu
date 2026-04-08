@@ -4,7 +4,7 @@ from torch.nn.utils import clip_grad_norm_
 import os
 import numpy as np 
 from datetime import datetime
-from src.utils.logger_wandb import init_wandb, log_image_to_wandb, log_metrics
+from src.utils.logger_wandb import init_wandb, log_metrics
 
 class Trainer:
     """Forward -> Compute loss -> zero_grad -> Backward -> Update weights (step)"""
