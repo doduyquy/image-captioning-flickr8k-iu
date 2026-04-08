@@ -7,14 +7,16 @@ class BaseCaptionModel(nn.Module):
         self.encoder_module = encoder
         self.decoder_module = decoder
 
-    def encoder(images) -> torch.Tensor: #-> features
-        pass
-    def decoder(captions, features) -> torch.Tensor: # -> logits
-        pass
+    def forward(self, images, captions):
+        """
+        Nhiệm vụ: Nhận ảnh và captions, trả về logits.
+        Cần được override ở lớp con.
+        """
+        raise NotImplementedError
 
-    def forward(images, captions):
-        # encoder -> decoder
-        pass
-
-    def generate(image, vocab, max_len, stratergy, beam_size) -> str: # caption (Q thay mot so doc goi la: candidate)
-        pass
+    def generate(self, image, vocab, max_len, strategy, beam_size):
+        """
+        Nhiệm vụ: Sinh caption từ ảnh.
+        Cần được override ở lớp con.
+        """
+        raise NotImplementedError
