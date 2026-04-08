@@ -17,7 +17,7 @@ def evaluate_model(model, dataloader, vocab, device, method='greedy', beam_size=
     
     print(f"--> [Evaluation] Đang gom nhóm và đánh giá trên {len(dataloader.dataset)} mẫu ({method})...")
     
-    special_tokens = {"<start>", "<end>", "<pad>"}
+    special_tokens = {"<start>", "<end>", "<pad>", "<unk>"}
     
     for images, captions, paths in tqdm(dataloader):
         # 1. Thu thập References và Sinh dữ liệu nếu chưa có
@@ -63,7 +63,7 @@ def evaluate_and_show(model, dataloader, vocab, device, method='greedy', num_sam
     
     model.eval()
     samples_shown = 0
-    special_tokens = {"<start>", "<end>", "<pad>"}
+    special_tokens = {"<start>", "<end>", "<pad>", "<unk>"}
     
     with torch.no_grad():
         for images, captions, paths in dataloader:
@@ -93,7 +93,7 @@ def get_detailed_results(model, dataloader, vocab, device, method='greedy', beam
     model.eval()
     image_to_preds = {}
     image_to_refs = defaultdict(list)
-    special_tokens = {"<start>", "<end>", "<pad>"}
+    special_tokens = {"<start>", "<end>", "<pad>", "<unk>"}
     
     print(f"--> [Analysis] Đang trích xuất kết quả chi tiết...")
     
