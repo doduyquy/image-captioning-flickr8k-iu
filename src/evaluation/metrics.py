@@ -24,6 +24,11 @@ def calculate_bleu_scores(all_preds, all_refs):
     num_samples = len(all_preds)
     return bleu1/num_samples, bleu2/num_samples, bleu3/num_samples, bleu4/num_samples
 
+def calculate_individual_bleu(preds, refs):
+    """Tính BLEU-4 cho 1 mẫu duy nhất so với danh sách refs"""
+    chencherry = SmoothingFunction()
+    return sentence_bleu(refs, preds, weights=(0.25, 0.25, 0.25, 0.25), smoothing_function=chencherry.method1)
+
 def _lcs(x, y):
     """Hàm phụ trợ tính Longest Common Subsequence cho ROUGE-L"""
     n, m = len(x), len(y)
@@ -74,6 +79,8 @@ def calculate_metrics(all_preds, all_refs):
 
     return {
         "BLEU-1": b1,
+        "BLEU-2": b2,
+        "BLEU-3": b3,
         "BLEU-4": b4,
         "METEOR": met_score / num_samples,
         "ROUGE-L": rouge_l_score / num_samples,

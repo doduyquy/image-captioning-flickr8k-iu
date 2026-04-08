@@ -1,6 +1,6 @@
 import torch
 from tqdm import tqdm
-from .metrics import calculate_metrics
+from .metrics import calculate_metrics, calculate_individual_bleu
 
 from collections import defaultdict
 
@@ -83,4 +83,44 @@ def evaluate_and_show(model, dataloader, vocab, device, method='greedy', num_sam
             
             show_prediction(images[0], pred_sentence, [ref_sentence])
             samples_shown += 1
+
+@torch.no_grad()
+def get_detailed_results(model, dataloader, vocab, device, method='greedy', beam_size=5, max_len=25):
+    """
+    Tương tự evaluate_model nhưng trả về danh sách chi tiết từng ảnh 
+    kèm điểm số để phân tích thành công/thất bại.
+    """
+    model.eval()
+    image_to_preds = {}
+    image_to_refs = defaultdict(list)
+    special_tokens = {"<start>", "<end>", "<pad>"}
+    
+    print(f"--> [Analysis] Đang trích xuất kết quả chi tiết...")
+    
+    for images, captions, paths in tqdm(dataloader):
+        for i in range(len(paths)):
+            path = paths[i]
+            ref_words = [vocab.itos[t.item()] for t in captions[i] if vocab.itos[t.item()] not in special_tokens]
+            image_to_refs[path].append(ref_words)
+            
+            if path not in image_to_preds:
+                img = images[i].unsqueeze(0).to(device)
+                pred_tokens = model.generate(img, vocab, method=method, beam_size=beam_size, max_len=max_len, device=device)
+                pred_words = [vocab.itos[t.item()] for t in pred_tokens if vocab.itos[t.item()] not in special_tokens]
+                image_to_preds[path] = pred_words
+                
+    detailed_results = []
+    for path in image_to_preds:
+        preds = image_to_preds[path]
+        refs = image_to_refs[path]
+        score = calculate_individual_bleu(preds, refs)
+        
+        detailed_results.append({
+            "path": path,
+            "prediction": " ".join(preds),
+            "references": [" ".join(r) for r in refs],
+            "score": score
+        })
+        
+    return detailed_results
 

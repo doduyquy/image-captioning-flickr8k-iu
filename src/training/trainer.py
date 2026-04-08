@@ -92,6 +92,7 @@ class Trainer:
             init_wandb(config=self.config, run_name=self.run_name)
 
         best_val_loss = float("inf")
+        best_epoch = 0
         patience_counter = 0
         all_train_loss = []
         all_val_loss = []
@@ -131,6 +132,7 @@ class Trainer:
             # save checkpoint
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
+                best_epoch = ep + 1
                 patience_counter = 0
 
                 torch.save({
@@ -147,7 +149,7 @@ class Trainer:
                     print(f"\t-_- Early stopping at ep={ep+1}")
                     break
 
-        return all_train_loss, all_val_loss
+        return all_train_loss, all_val_loss, best_val_loss, best_epoch
 
 
 
