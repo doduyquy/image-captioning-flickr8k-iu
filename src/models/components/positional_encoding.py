@@ -28,8 +28,21 @@ class SinusoidalPositionalEncoding(nn.Module):
     def forward(self, x):
         """
         x: [B, T, D]
+        Tự động mở rộng PE nếu T > max_len đã khởi tạo.
         """
         T = x.shape[1]
+        if T > self.pe.shape[1]:
+            # Mở rộng PE thêm cho đủ chiều dài T
+            device = self.pe.device
+            embed_dim = self.pe.shape[2]
+            pe = torch.zeros(T, embed_dim, device=device)
+            position = torch.arange(0, T, dtype=torch.float, device=device).unsqueeze(1)
+            div_term = torch.exp(
+                torch.arange(0, embed_dim, 2, device=device).float() * (-math.log(10000.0) / embed_dim)
+            )
+            pe[:, 0::2] = torch.sin(position * div_term)
+            pe[:, 1::2] = torch.cos(position * div_term)
+            return x + pe.unsqueeze(0)[:, :T, :]
         return x + self.pe[:, :T, :]
 
 
