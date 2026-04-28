@@ -6,7 +6,7 @@ from src.utils.config import load_config
 from src.utils.seed import set_seed
 from src.utils.logger_wandb import init_wandb
 
-from src.data.dataloader import get_loaders_flickr8k
+from src.data.dataloader import get_loaders_flickr8k, get_loaders_iu_xray
 from src.models import build_model
 from src.training.trainer import Trainer
 from src.training.losses import build_loss
@@ -30,41 +30,66 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=str, required=True)
     parser.add_argument("--env", type=str, default="local", choices=["local", "kaggle"])
+    parser.add_argument("--dataset", type=str, default="flickr8k", choices=["flickr8k", "iu_xray"],
+                        help="Dataset to train on: flickr8k | iu_xray")
     args = parser.parse_args()
     
     # load config
     config = load_config(args.config, args.env)
     set_seed(config['seed'].get('random_seed', 21))
 
-    # Lấy đường dẫn
-    data_path = config['flickr8k']['data_path']
-    root_path = config['flickr8k']['root_path']
-
     timestamp = datetime.now().strftime("%d%m%Y_%H%M")
-    run_name = f"{config['model'].get('name', 'transformer')}_{timestamp}"
+    run_name = f"{config['model'].get('name', 'transformer')}_{args.dataset}_{timestamp}"
 
-    # Lấy tự động file txt
-    captions_file_name = config["flickr8k"].get("captions_filename", "captions.txt")
-    if not captions_file_name.endswith(".txt") and not captions_file_name.endswith(".csv"):
-        captions_file_name += ".txt"
+    # -----------------------------------------------------------------------
+    # Data loading: switch giữa flickr8k và iu_xray
+    # -----------------------------------------------------------------------
+    if args.dataset == "flickr8k":
+        data_path = config['flickr8k']['data_path']
+        root_path = config['flickr8k']['root_path']
 
-    image_dir = os.path.join(data_path, 'images') 
-    captions_file = os.path.join(data_path, captions_file_name)
-    
-    print(f"--> Image Dir: {image_dir}")
-    print(f"--> Captions File: {captions_file}")
+        captions_file_name = config["flickr8k"].get("captions_filename", "captions.txt")
+        if not captions_file_name.endswith(".txt") and not captions_file_name.endswith(".csv"):
+            captions_file_name += ".txt"
 
-    # load data, vocab
-    loaders, vocab = get_loaders_flickr8k(
-        data_dir=data_path,
-        image_dir=image_dir,
-        captions_file=captions_file,
-        batch_size=config['data'].get('batch_size', 32),
-        num_workers=config['data'].get('num_workers', 2),
-        freq_threshold=config['data'].get('freq_threshold', 5)
-    )
+        image_dir = os.path.join(data_path, 'images')
+        captions_file = os.path.join(data_path, captions_file_name)
+
+        print(f"--> Image Dir: {image_dir}")
+        print(f"--> Captions File: {captions_file}")
+
+        loaders, vocab = get_loaders_flickr8k(
+            data_dir=data_path,
+            image_dir=image_dir,
+            captions_file=captions_file,
+            batch_size=config['data'].get('batch_size', 32),
+            num_workers=config['data'].get('num_workers', 2),
+            freq_threshold=config['data'].get('freq_threshold', 5)
+        )
+
+    elif args.dataset == "iu_xray":
+        data_path = config['iu_xray']['data_path']
+        root_path = config['iu_xray']['root_path']
+        annotation_file = config['iu_xray']['annotation_file']
+        image_dir = os.path.join(data_path, 'images')
+
+        print(f"--> Data Path: {data_path}")
+        print(f"--> Image Dir: {image_dir}")
+        print(f"--> Annotation File: {annotation_file}")
+
+        loaders, vocab = get_loaders_iu_xray(
+            annotation_file=annotation_file,
+            image_dir=image_dir,
+            batch_size=config['data'].get('batch_size', 32),
+            num_workers=config['data'].get('num_workers', 2),
+            freq_threshold=config['data'].get('freq_threshold', 3)
+        )
+
+    else:
+        raise ValueError(f"Unknown dataset: {args.dataset}")
+
     train_loader, val_loader, test_loader = loaders
-    
+
     # Sử dụng build_model chuyên nghiệp
     model = build_model(config=config, vocab_size=len(vocab))
     
