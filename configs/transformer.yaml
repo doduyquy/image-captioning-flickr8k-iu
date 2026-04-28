@@ -6,7 +6,7 @@ model:
   ff_dim: 2048
   num_layers: 3
   dropout: 0.2
-  max_len: 50
+  max_len: 110
 
 training:
   epochs: 30
