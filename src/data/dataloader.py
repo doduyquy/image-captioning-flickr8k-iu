@@ -4,8 +4,9 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 from .flickr8k import load_captions, filter_valid_images, flatten_data, Flickr8kDataset
+from .iu_xray import load_iu_xray_annotation, flatten_iu_xray, IUXrayDataset
 from .vocab import Vocabulary
-from .collate import collate_fn
+from .collate import collate_fn, collate_fn_iu_xray
 from .transform import build_transforms
 
 def load_split_set(file_path):
@@ -92,6 +93,66 @@ def get_loaders_flickr8k(
     
     return (train_loader, val_loader, test_loader), vocab
 
+
+def get_loaders_iu_xray(
+    annotation_file,
+    image_dir,
+    vocab=None,
+    batch_size=32,
+    num_workers=2,
+    freq_threshold=3,
+):
+    """
+    Load IU X-Ray dataset (R2Gen-style annotation.json).
+    Dùng CẢ 2 ảnh (frontal + lateral) per sample — không cần biết cái nào là frontal.
+    Mỗi sample trả về images shape [2, 3, H, W], model sẽ average features của 2 ảnh.
+
+    Args:
+        annotation_file (str): Đường dẫn đến annotation.json
+        image_dir (str): Thư mục chứa ảnh (thường là data_path/images)
+        vocab (Vocabulary, optional): Nếu None sẽ build từ train set
+        batch_size (int): Kích thước batch
+        num_workers (int): Số worker cho DataLoader
+        freq_threshold (int): Ngưỡng tần suất từ khi build vocab (3 phù hợp cho y tế)
+
+    Returns:
+        (train_loader, val_loader, test_loader), vocab
+    """
+    # 1. Load annotation.json
+    print("Loading IU_Xray annotation...")
+    split_data = load_iu_xray_annotation(annotation_file)
+
+    # 2. Flatten từng split (filter ảnh không tồn tại)
+    print("Flattening data (frontal only)...")
+    train_paths, train_caps = flatten_iu_xray(image_dir, split_data["train"])
+    val_paths,   val_caps   = flatten_iu_xray(image_dir, split_data["val"])
+    test_paths,  test_caps  = flatten_iu_xray(image_dir, split_data["test"])
+
+    # 3. Build Vocab (chỉ từ train set)
+    if vocab is None:
+        print("Building vocabulary from Train set...")
+        vocab = Vocabulary(freq_threshold=freq_threshold)
+        vocab.build_vocab(train_caps)
+
+    # 4. Transforms
+    train_transform, val_test_transform = build_transforms()
+
+    # 5. Khởi tạo Dataset
+    print("Building datasets...")
+    train_dataset = IUXrayDataset(train_paths, train_caps, vocab, transform=train_transform)
+    val_dataset   = IUXrayDataset(val_paths,   val_caps,   vocab, transform=val_test_transform)
+    test_dataset  = IUXrayDataset(test_paths,  test_caps,  vocab, transform=val_test_transform)
+
+    # 6. DataLoader — dùng collate_fn_iu_xray để xử lý [B, 2, 3, H, W]
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True,
+                              num_workers=num_workers, collate_fn=collate_fn_iu_xray)
+    val_loader   = DataLoader(val_dataset,   batch_size=batch_size, shuffle=False,
+                              num_workers=num_workers, collate_fn=collate_fn_iu_xray)
+    test_loader  = DataLoader(test_dataset,  batch_size=batch_size, shuffle=False,
+                              num_workers=num_workers, collate_fn=collate_fn_iu_xray)
+
+    print(f"Loader done: Train ({len(train_dataset)}), Val ({len(val_dataset)}), Test ({len(test_dataset)})")
+    return (train_loader, val_loader, test_loader), vocab
 
 
 

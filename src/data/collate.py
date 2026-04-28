@@ -21,6 +21,32 @@ def collate_fn(batch):
 
     return images, captions, paths
 
+
+def collate_fn_iu_xray(batch):
+    """
+    Collate function cho IU_Xray dataset.
+    Mỗi sample có images shape [2, 3, H, W] (2 ảnh).
+    Output images shape: [B, 2, 3, H, W]
+    """
+    images = []
+    captions = []
+    paths = []
+
+    for img, cap, path in batch:
+        images.append(img)   # img shape: [2, 3, H, W]
+        captions.append(cap)
+        paths.append(path)
+
+    # Stack [2,3,H,W] × B → [B, 2, 3, H, W]
+    images = torch.stack(images)
+    captions = pad_sequence(
+        captions,
+        batch_first=True,
+        padding_value=0  # <pad>
+    )
+
+    return images, captions, paths
+
 if __name__ == "__main__":
     # Test batch với độ dài caption khác nhau
     # Hình ảnh giả lập có shape (3, 224, 224)
