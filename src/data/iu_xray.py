@@ -60,16 +60,20 @@ class IUXrayDataset(Dataset):
 
 def load_iu_xray_annotation(annotation_file):
     """
-    Đọc file annotation.json theo R2Gen-style.
+    Đọc file annotation.json cho IU X-Ray.
 
-    Format JSON:
+    Hỗ trợ 2 format phổ biến:
+
+    Format A — Dict-based (R2Gen gốc):
+        {
+            "train": [ {"id": "1", "image": [...], "report": "..."}, ... ],
+            "val":   [ ... ],
+            "test":  [ ... ]
+        }
+
+    Format B — List-based:
         [
-            {
-                "id": "1",
-                "image": ["frontal.png", "lateral.png"],
-                "report": "The heart is ...",
-                "split": "train"
-            },
+            {"id": "1", "image": [...], "report": "...", "split": "train"},
             ...
         ]
 
@@ -78,7 +82,6 @@ def load_iu_xray_annotation(annotation_file):
 
     Returns:
         dict: { "train": [...], "val": [...], "test": [...] }
-              Mỗi phần tử là 1 dict gốc từ JSON
     """
     if not os.path.exists(annotation_file):
         raise FileNotFoundError(f"Không tìm thấy annotation file: {annotation_file}")
@@ -87,17 +90,31 @@ def load_iu_xray_annotation(annotation_file):
         data = json.load(f)
 
     split_data = {"train": [], "val": [], "test": []}
-    for item in data:
-        split = item.get("split", "train")
-        if split in split_data:
-            split_data[split].append(item)
-        else:
-            # Fallback nếu split value không hợp lệ
-            split_data["train"].append(item)
+
+    if isinstance(data, dict):
+        # Format A: {"train": [...], "val": [...], "test": [...]}
+        for split_key in ["train", "val", "test"]:
+            if split_key in data:
+                split_data[split_key] = data[split_key]
+        print(f"   [IU_Xray] Detected format: dict-based (keys: {list(data.keys())})")
+
+    elif isinstance(data, list):
+        # Format B: [{..., "split": "train"}, ...]
+        for item in data:
+            split = item.get("split", "train")
+            if split in split_data:
+                split_data[split].append(item)
+            else:
+                split_data["train"].append(item)
+        print(f"   [IU_Xray] Detected format: list-based ({len(data)} total items)")
+
+    else:
+        raise ValueError(f"Không nhận ra format của annotation.json (type: {type(data)})")
 
     counts = {k: len(v) for k, v in split_data.items()}
     print(f"   IU_Xray annotation loaded — Train: {counts['train']}, Val: {counts['val']}, Test: {counts['test']}")
     return split_data
+
 
 
 def flatten_iu_xray(image_dir, items):
