@@ -125,20 +125,14 @@ def flatten_iu_xray(image_dir, items):
     Mỗi sample giữ CẢ 2 ảnh và lưu dưới dạng [path1, path2].
     Không cần biết cái nào là frontal/lateral.
     Sample bị bỏ qua nếu thiếu report hoặc không đủ 2 ảnh tồn tại.
-
-    Args:
-        image_dir (str): Thư mục chứa các file ảnh
-        items (list): List annotation items [{image: [p1, p2], report: str}]
-
-    Returns:
-        image_paths_pairs (list): Danh sách [path1, path2] cho mỗi sample
-        captions (list): Danh sách report tương ứng
     """
     image_paths_pairs, captions = [], []
     skipped = 0
 
     for item in items:
-        img_names = item.get("image", [])
+        # Lấy danh sách ảnh (hỗ trợ cả key "image" và "image_path")
+        img_names = item.get("image") or item.get("image_path", [])
+        
         report = item.get("report", "").lower().strip()
 
         # Bỏ qua sample thiếu dữ liệu
@@ -169,8 +163,14 @@ def flatten_iu_xray(image_dir, items):
 
     if skipped > 0:
         print(f"   [IU_Xray] Đã bỏ qua {skipped} samples (thiếu ảnh hoặc report rỗng)")
+        # Cảnh báo thêm nếu skip toàn bộ
+        if skipped == len(items) and len(items) > 0:
+            print(f"   [CẢNH BÁO] Toàn bộ dữ liệu bị bỏ qua! Hãy kiểm tra lại image_dir:")
+            print(f"   Đang tìm ảnh tại: {image_dir}")
+            print(f"   Ví dụ tên ảnh đang tìm: {items[0].get('image') or items[0].get('image_path', [])}")
 
     return image_paths_pairs, captions
+
 
 
 # -----------------------------------------------------------------------
