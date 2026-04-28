@@ -39,21 +39,33 @@ class TransformerCaptionModel(BaseCaptionModel):
             max_len=max_len
         )
 
+    def _encode(self, images):
+        """
+        Encode ảnh, hỗ trợ cả 2 mode:
+          - Single-image [B, 3, H, W]   → Flickr8k
+          - Dual-image   [B, 2, 3, H, W] → IU_Xray (average features của 2 ảnh)
+
+        Returns: features [B, S, embed_dim] sau spatial encoder
+        """
+        if images.dim() == 5:  # [B, 2, 3, H, W]
+            B, N, C, H, W = images.shape
+            # Reshape → [B*N, 3, H, W] → encode → average
+            flat = images.view(B * N, C, H, W)
+            feats = self.encoder(flat)                          # [B*N, S, D]
+            feats = feats.view(B, N, *feats.shape[1:])         # [B, N, S, D]
+            feats = feats.mean(dim=1)                          # [B, S, D]
+        else:                  # [B, 3, H, W]
+            feats = self.encoder(images)                       # [B, S, D]
+
+        return self.spatial_encoder(feats)                     # [B, S, D]
+
     def forward(self, images, captions):
         """
-        images: [B, 3, 224, 224]
+        images: [B, 3, 224, 224]  hoặc  [B, 2, 3, 224, 224]
         captions: [B, T]
         """
-        # CNN trích xuất đặc trưng: [B, 49, 512]
-        # Hybrid trích xuất đặc trưng: [B, 49, 512]
-        features = self.encoder(images)
-        
-        # Spatial Transformer Encoder tinh chỉnh đặc trưng: [B, 49, 512]
-        features = self.spatial_encoder(features)
-        
-        # Transformer Decoder sinh logits: [B, T, vocab_size]
+        features = self._encode(images)      # [B, S, D]
         logits = self.decoder(captions, features)
-        
         return logits
 
     @torch.no_grad()
@@ -77,40 +89,34 @@ class TransformerCaptionModel(BaseCaptionModel):
     def _greedy_decode(self, images, vocab, max_len=25, device='cpu', **kwargs):
         """
         Giải mã tham lam (Greedy Search): Ở mỗi bước chọn từ có xác suất cao nhất.
+        Hỗ trợ cả single [B,3,H,W] và dual [B,2,3,H,W] ảnh.
         """
         images = images.to(device)
-        
-        # 1. Encoding
-        # 1. Encoding
-        features = self.spatial_encoder(self.encoder(images))
-        
-        # 2. Decoding (Greedy)
+        features = self._encode(images)      # [B, S, D]
+
         start_token = vocab.stoi["<start>"]
         captions = torch.tensor([[start_token]]).to(device)
-        
-        for _ in range(max_len): # sinh từ
+
+        for _ in range(max_len):
             logits = self.decoder(captions, features)
             next_token = logits[:, -1, :].argmax(dim=-1).unsqueeze(1)
-            
-            captions = torch.cat([captions, next_token], dim=1) # nối từ trước và từ mới sinh ra 
-            
+            captions = torch.cat([captions, next_token], dim=1)
             if next_token.item() == vocab.stoi["<end>"]:
                 break
-                
+
         return captions.squeeze(0)
 
     def _beam_search_decode(self, images, vocab, beam_size=5, max_len=25, device='cpu', **kwargs):
         """
         Giải mã Beam Search: Duy trì K (beam_size) giả thuyết tốt nhất ở mỗi bước.
+        Hỗ trợ cả single [B,3,H,W] và dual [B,2,3,H,W] ảnh.
         """
         images = images.to(device)
         start_token = vocab.stoi["<start>"]
         end_token = vocab.stoi["<end>"]
-        
-        # 1. Encoding
-        # 1. Encoding
-        features = self.spatial_encoder(self.encoder(images)) # [B, 49, 512]
-        
+
+        features = self._encode(images)   # [B, S, D]
+
         # 2. Khởi tạo Beam
         # Một beam item: (chuỗi các token, điểm xác suất tích lũy)
         beams = [([start_token], 0.0)]
