@@ -81,7 +81,12 @@ def evaluate_and_show(model, dataloader, vocab, device, method='greedy', num_sam
             print(f"  Gốc (mẫu): {ref_sentence}")
             print(f"  Dự đoán: {pred_sentence}")
             
-            show_prediction(images[0], pred_sentence, [ref_sentence])
+            # images[0] có thể có shape [2, 3, H, W] (IU X-Ray: frontal + lateral)
+            # hoặc [3, H, W] (Flickr8k: single image). Luôn lấy ảnh đầu tiên.
+            img_to_show = images[0]
+            if img_to_show.dim() == 4:
+                img_to_show = img_to_show[0]  # Lấy frontal view
+            show_prediction(img_to_show, pred_sentence, [ref_sentence])
             samples_shown += 1
 
 @torch.no_grad()
