@@ -5,6 +5,7 @@ import os
 import numpy as np 
 from datetime import datetime
 from src.utils.logger_wandb import init_wandb, log_metrics
+from src.evaluation.evaluator import evaluate_model
 
 class Trainer:
     """Forward -> Compute loss -> zero_grad -> Backward -> Update weights (step)"""
@@ -17,6 +18,7 @@ class Trainer:
         self.clip = clip_grad_norm
         self.scheduler = scheduler
         self.device = device
+        self.vocab = vocab
         self.epochs = config['training'].get('epochs', 100)
         self.patience = config['training'].get('patience', 20)
         self.model_name = config['model'].get('name', 'lstm')
@@ -24,6 +26,9 @@ class Trainer:
         self.run_name = run_name
         self.config = config
         self.path_save_ckpt = save_dir
+        # Đánh giá metrics mỗi eval_every epoch (0 = tắt)
+        self.eval_every = config['training'].get('eval_every', 1)
+        self.eval_strategy = config['training'].get('eval_strategy', 'greedy')
     
 
     def train_one_epoch(self):
@@ -113,14 +118,27 @@ class Trainer:
                 f"val_loss: {val_loss:.4f}"
             )
 
+            # --- Tính toán NLP metrics định kỳ ---
+            val_metrics = {}
+            if self.eval_every > 0 and (ep + 1) % self.eval_every == 0:
+                print(f"\t--- [Metrics] Đang đánh giá val metrics (epoch {ep+1})...")
+                val_metrics = evaluate_model(
+                    self.model, self.val_loader, self.vocab, self.device,
+                    method=self.eval_strategy
+                )
+
             # wandb log
             if self.use_wandb:
-                log_metrics({
+                wandb_dict = {
                     "Epoch": ep + 1,
                     "Train/Loss": train_loss,
                     "Val/Loss": val_loss,
                     "Learning_Rate": self.optimizer.param_groups[0]['lr']
-                }, epoch=ep)
+                }
+                # Thêm metrics vào dict nếu đã tính
+                for k, v in val_metrics.items():
+                    wandb_dict[f"Val/{k}"] = v
+                log_metrics(wandb_dict, epoch=ep)
 
             # lr scheduler
             if self.scheduler is not None:

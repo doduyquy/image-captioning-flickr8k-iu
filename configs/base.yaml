@@ -20,7 +20,8 @@ training:
   
   clip_grad_norm: 1.0
   eval_limit: 100
-  eval_strategy: 'beam' # greedy
+  eval_strategy: 'beam'   # greedy | beam
+  eval_every: 1           # Tính NLP metrics mỗi N epoch. 0 = tắt hoàn toàn.
 
 logging:
   # wandb
