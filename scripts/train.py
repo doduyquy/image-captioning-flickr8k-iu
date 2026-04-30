@@ -110,6 +110,7 @@ def main():
         model=model,
         train_loader=train_loader,
         val_loader=val_loader,
+        test_loader=test_loader,
         vocab=vocab,
         criterion=loss,
         optimizer=optimizer,
@@ -120,7 +121,7 @@ def main():
         run_name=run_name,
         save_dir=path_save_ckpt
     )
-    train_losses, val_losses, best_val_loss, best_epoch = trainer.fit()
+    train_losses, val_losses, best_val_bleu4, best_epoch = trainer.fit()
 
     # evaluate
     print("\n" + "="*51)
@@ -137,8 +138,8 @@ def main():
     # Log metrics lên WandB nếu đang dùng
     if config['logging'].get('use_wandb', True):
         # Lưu lại các giá trị 'Best' vào summary để không bị lẫn với epoch cuối
-        wandb.run.summary["best_val_loss"] = best_val_loss
-        wandb.run.summary["best_epoch"] = best_epoch
+        wandb.run.summary["best_val_bleu4"] = best_val_bleu4
+        wandb.run.summary["best_epoch"]     = best_epoch
         
         # Chúng ta dùng log với tiền tố 'Test/' để phân biệt
         wandb.log({f"Test/{k}": v for k, v in test_metrics.items()})
